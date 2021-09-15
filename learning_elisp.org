@@ -35,3 +35,45 @@
 #+end_src
 
 * Episode 2: Types, Conditionals, and Loops
+
+  #+begin_src emacs-lisp
+    ;; true and false
+    (type-of t)
+    (type-of nil)
+
+    ;; check equality
+    ;; eq - are the two params the same object?
+    (eq 1 1)
+    (eq 3.1 3.1)  ;; nope, flops
+    (eq '(1 2 3) '(1 2 3))  ; no, different lists
+
+    ;; eql - are they the same object or the same number?
+    (eql 1 1)
+    (eql 3.1 3.1)  ; yes!
+    (eql '(1 2 3) '(1 2 3))  ; no
+
+    ;; equal -- compare the values
+    (equal 1 1)
+    (equal 3.1 3.1)
+    (equal '(1 2 3) '(1 2 3))  ; yes
+
+    ;; numbers
+    (truncate 1.2)
+    (round 1.2)
+    (floor -1.2)
+    (ceiling -1.2)
+
+    ;; predicates
+    (integerp 1)
+    (integerp 1.1)
+
+    (floatp 1)
+    (floatp 1.1)
+
+    (numberp 1)
+    (numberp 1.1)
+    (numberp "one")
+
+    (zerop 1)
+    (zerop 0)
+  #+end_src

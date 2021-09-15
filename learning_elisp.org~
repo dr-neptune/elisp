@@ -1,2 +1,37 @@
 #+TITLE: Introduction to Emacs Lisp
 #+AUTHOR: Michael Rose
+
+* Episode 1: Learning Emacs Lisp #1
+
+#+begin_src emacs-lisp
+  (defun the-meaning-of-life (answer)
+    (message "The answer is %s" answer))
+
+  (list 1 2 3
+	4 5 6
+	7 8 9)
+
+  ;; primitives
+  42
+  "Hello"
+  [1 2 (+ 1 2)]
+  buffer-file-name
+  (+ 200 11)
+  (+ 300 (- 12 1))
+
+  (* 42 10)
+
+  (concat "Hello " "Emacs!")
+
+  '(1 2 3)
+  (list 1 2 3)
+  (car (cdr '(1 2 3)))
+  [1 2 3]
+
+  (stringp "Am I a string?")
+  (stringp 40)
+  (type-of "Am I a string?")
+
+#+end_src
+
+* Episode 2: Types, Conditionals, and Loops
