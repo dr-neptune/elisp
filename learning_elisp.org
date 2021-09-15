@@ -408,4 +408,5 @@ interactive can accept parameters that tell Emacs what to do when the command is
     (setq not-local-yet t)
     (make-variable-buffer-local 'not-local-yet)
 
+    (message "test!")
   #+end_src
