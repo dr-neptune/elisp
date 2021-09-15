@@ -72,8 +72,340 @@
 
     (numberp 1)
     (numberp 1.1)
+
     (numberp "one")
 
     (zerop 1)
     (zerop 0)
+
+    ;; comparisons
+    (= 1 1)
+    (= 1 1.0)
+
+    (max 1 2 3 4 5)
+    (min 1 2 3 4 5)
+
+    ;; sequences
+    (sequencep "Sequence?")
+    (sequencep "")
+    (sequencep nil)
+
+    ;; get an element of any sequence at a 0-based index
+    (elt "Hello!" 1)
+    (elt '(3 2 1) 0)
+
+    ;; strings
+    "Hello?"
+
+    "Hello \n
+    Darkness my old friend"
+
+    (make-string 5 ?!)
+    (string ?H ?e ?l ?l ?o)
+
+    ;; string predicates
+    (stringp "test")
+    (string-or-null-p nil)
+
+    (char-or-string-p ?A)
+
+    (arrayp "Array?")
+    (sequencep "Sequence?")
+    (listp "List?")
+
+    ;; comparisons
+    (string= "Hello" "HELLO")
+    (string< "Mello" "Jello")
+    (string< "Jello" "Mello")
+    (string< "Hel" "Hello")
+
+    ;; string operations
+    (substring "Hello!" 0 4)
+    (concat "Hello"  " " "World")
+    (split-string "Hello Darkness My Old Friend")
+    (split-string "Jello Barkness My Old Bread" "B")
+    (split-string "Mellow Yellow" "[MY]" t)
+
+    ;; lists
+    (cons 1 '(2 3 4))
+    (setq some-cons '(1 2 '(3 4 '(5 6))))
+    (cdr some-cons)
+    (caddr some-cons)
+
+    (setcar some-cons 7)
+
+    some-cons
+
+    (setcar (cdr some-cons) 8)
+
+    some-cons
+
+    (append some-cons '(9 10 11))
+
+    ;; alists are like key value pairs
+    (setq some-alist '((one . 1)
+		       (two . 2)
+		       (three . 3)))
+    (alist-get 'one some-alist)
+    (alist-get 'two some-alist)
+    ;; get alist values
+    (assq 'one some-alist)  ;; key
+    (rassq 1 some-alist)    ;; value
+    ;; set specific values
+    (setf (alist-get 'one some-alist) 5)
+    (alist-get 'one some-alist)
+
+    ;; plists are flat alists
+    (plist-get '(one 1 two 2) 'one)
+    (plist-put '(one 1 two 2) 'three 3)
+
+    ;; arrays
+    (setq some-array [1 2 3 4])
+    (aset some-array 1 5)
+
+    ;; logic expressions
+    (not t)
+    (not 3)
+    (and t t t t)       ;; returns t
+    (and t t t t 'foo)  ;; returns foo
+    (and t t t t nil)  ;; returns nil
+    (or nil 'something)
+
+    ;; conditionals
+    (if t
+	5
+      ;; we can add an arbitrary number of forms in the false branch
+      (message "Doing some extra stuff here")
+      (+ 2 2))
+
+    ;; we can use progn to enable multiple expressions in the "true" branch
+    (if t
+	(progn
+	  (message "This is true!")
+	  5)
+      ;; false
+      (message "This is false!")
+      10)
+
+    ;; when and unless
+    ;; when evals when expression evaluates to t
+    ;; unless evals when expression evaluates to nil
+    (when (> 2 1) 'foo)
+    (unless (> 2 1) 'foo)
+
+
+    ;; cond
+    (setq a 1)
+    (setq a 2)
+    (setq a -1)
+
+    (cond ((eql a 1) "Equal to 1")
+	  ((> a 1)   "Greater than 1")
+	  (t         "Something else"))
+
+    ;; loops
+    (setq my-loop-counter 0)
+    (while (< my-loop-counter 5)
+      (message "I'm looping %d" my-loop-counter)
+      (setq my-loop-counter (1+ my-loop-counter)))
+
+    ;; dotimes
+    (dotimes (count 5)
+      (message "I'm looping more easily %d" count))
+
+    ;; dolist
+    (dolist (item '("one" "two" "three" "four" "five"))
+      (message "Item %s" item))
+
+    ;; recursion
+    (defun efs/recursion-test (counter limit)
+      (when (< counter limit)
+	(message "I'm looping via recursion! %d" counter)
+	(efs/recursion-test (1+ counter) limit)))
+
+    (efs/recursion-test 0 5)
+  #+end_src
+
+* Episode 3: Defining Functions and Commands
+
+  #+begin_src emacs-lisp
+    (defun do-some-math (x y)
+      (* (+ x 20)
+	 (- y 10)))
+
+    (do-some-math 100 50)
+
+    ;; function arguments
+    (defun multiply-maybe (x &optional y z)
+      (* x
+	 (or y 1)
+	 (or z 1)))
+
+    (multiply-maybe 5)
+    (multiply-maybe 5 2)
+    (multiply-maybe 5 2 10)
+    (multiply-maybe 5 2 nil)
+    (multiply-maybe 5 2 10 7)
+
+
+    (defun multiply-many (x &rest operands)
+      "Multiplies the arguments X and other OPERANDS given"
+      (dolist (operand operands)
+	(when operand
+	  (setq x (* x operand))))
+      x)
+
+    (multiply-many 5)
+    (multiply-many 5 2)
+    (multiply-many 5 2 10)
+    (multiply-many 5 2 nil)
+    (multiply-many 5 2 10 7)
+
+    (defun multiply-two-or-many (x &optional y &rest operands)
+      (setq x (* x (or y 1)))
+      (dolist (operand operands)
+	(when operand
+	  (setq x (* x operand))))
+      x)
+
+    (multiply-two-or-many 5)
+    (multiply-two-or-many 5 2)
+    (multiply-two-or-many 5 2 10)
+    (multiply-two-or-many 5 2 nil)
+    (multiply-two-or-many 5 2 10 7 7 7 7 7 7 nil)
+
+    ;; lambdas
+    (lambda (x y)
+      (+ 100 x y))
+
+    ((lambda (x y)
+       (+ 100 x y))
+     10 20)
+
+
+    ;; invoking functions
+    (+ 2 2)
+    (funcall '+ 2 2)
+    (defun afunc (fun x)
+      (message "Function: %s -- Result: %d"
+	       fun
+	       (funcall fun x)))
+    (setq function-in-var (lambda (arg) (+ arg 1)))
+    (defun named-version (arg)
+      (+ arg 1))
+    (afunc (lambda (arg) (+ arg 1)) 5)
+    (afunc function-in-var 5)
+    (afunc 'named-version 5)
+
+
+    ;; interactive commands
+    (defun my-first-command ()
+      (interactive)
+      (message "it's alive!"))
+
+    ;; enter multiple numbers
+    (defun do-some-math (x y)
+      "Multiplies x and y"
+      (interactive "Nx:\t\nNy:\t")
+      (message "%d"
+		(* (+ x 20)
+		   (- y 10))))
+
+    ;; interactive enter a string
+    (defun ask-favorite-fruit (fruit-name)
+      (interactive "MEnter your favorite fruit:\t")
+      (message "Your favorite fruit is %s" fruit-name))
+
+    ;; enter a directory
+    (defun backup-directory (dir-path)
+      (interactive "DSelect a path to back up:\t")
+      (message "straight to the bitbucket:\t%s" dir-path))
+
+    (defun run-a-command (command)
+      (interactive "CPick a command:\t")
+      (message "Run %s yourself!" command))
+
+  #+end_src
+
+interactive can accept parameters that tell Emacs what to do when the command is executed
+
+*General Arguments*
+- N : prompt for numbers
+- p : use a numeric prefix without prompting
+- M : prompt for a string
+- i : skip an "irrelevant argument"
+
+*Files, Directories, and Buffers*
+- F : prompt for a file, providing completions
+- D : prompt for a directory, providing completions
+- b : prompt for a buffer, providing completions
+
+*Functions, Commands, and Variables*
+- C : prompt for a command name
+- a : prompt for a function name
+- v : prompt for a custom variable name
+
+** A Real Example!
+
+   #+begin_src emacs-lisp
+     (setq dotfiles-folder "~/.emacs.d")
+     (setq dotfiles-org-files '("initialization.org"))
+
+     (defun dotfiles-tangle-org-file (&optional org-file)
+       (interactive "F")
+       (org-babel-tangle-file (expand-file-name org-file dotfiles-folder)))
+
+     (defun dotfiles-tangle-org-files ()
+       (interactive)
+       (dolist (org-file dotfiles-org-files)
+	 (dotfiles-tangle-org-file org-file)))
+   #+end_src
+
+** Dice Roller
+
+   #+begin_src emacs-lisp
+     ;; roll a single die
+     (defun mr/roll-die (num)
+       (interactive "N")
+       (let ((roll (random num)))
+	 (if (equal roll 0)
+	     (mr/roll-die num)
+	   roll)))
+
+     ;; roll multiple die of a type
+     (defun mr/roll-multiple-die (num-die die-size &optional plus)
+       (interactive "NNumber of Dice:\t\nNDice Size:\t\nNPlus:\t")
+       (let ((roll (mapcar (lambda (dice-size-value)
+			     (mr/roll-die dice-size-value))
+			   (make-list num-die die-size))))
+	 (message "Rolling %sD%s + %s" num-die die-size plus)
+	 (message "Individual:\t%s" roll)
+	 (message "Adding:\t\t%s" (or plus 0))
+	 (message "Combined:\t%s" (apply '+ (push (or plus 0) roll)))))
+
+   #+end_src
+
+* Episode 4: Defining Variables and Scopes
+
+  #+begin_src emacs-lisp
+    ;; setting variables
+    ;; setq = setquote, syntactic sugar for (set SYM VAL)
+    ;; also allows for multiple inputs
+    (setq tab-width2 4)
+
+    ;; defining variables
+    (setq am-i-documented "no")
+
+    (defvar am-i-documented "yes"
+      "This is documentation")
+
+    ;; buffer local variables
+    ;; any code that runs in that buffer will receive the buffer-local value instead of the global value
+    (setq-local tab-width 4)
+
+
+    ;; make a variable local for all buffers
+    (setq not-local-yet t)
+    (make-variable-buffer-local 'not-local-yet)
+
   #+end_src
