@@ -408,5 +408,108 @@ interactive can accept parameters that tell Emacs what to do when the command is
     (setq not-local-yet t)
     (make-variable-buffer-local 'not-local-yet)
 
-    (message "test!")
+    ;; defining variable scopes
+
+    ;; let local scope
+    (defun do-the-loop ()
+      (interactive)
+      (let ((x 0))
+	(message "Starting the loop from %d" x)
+	(while (< x 5)
+	  (message "Loop index: %d" x)
+	  (cl-incf x)))
+      (message "Done!"))
+
+    (do-the-loop)
+
+    ;; defining multiple bindings with let and let*
+    (let* ((y 5)
+	   (z (+ y 5)))
+      (* y z))
+
+    ;; customization variables
+    (defcustom my-custom-variable 8888
+      "A variable that you can customize")
+
+    ;; setq is not guaranteed to change custom vars!
+    ;; instead use customize-set-variable
+    (customize-set-variable tab-width 4)
+
+    ;; alternatively with use-package
+    (use-package emacs
+      :custom
+      (tab-width 2))
   #+end_src
+
+** Continuing the project
+
+   #+begin_src emacs-lisp
+     (defcustom dotfiles-folder "~/.dotfiles"
+       "The folder where dotfiles and org-mode config files are stored"
+       :type 'string
+       :group 'dotfiles)
+
+     (defcustom dotfiles-org-files '()
+       "The list of org-mode files under the `dotfiles-folder' which
+     contain configuration files that should be tangled"
+       :type '(list string)
+       :group 'dotfiles)
+
+     (defun dotfiles-tangle-org-file (&optional org-file)
+       "Tangles a single .org file relative to the path in dotfiles-folder. If no file is specified, tangle the current file if it is an org-mode buffer inside of dotfiles folder."
+       (interactive)
+       ;; supress prompts and messages
+       (let ((org-confirm-babel-evaluate nil)
+	     (message-log-max nil)
+	     (inhibit-message t))
+	 (org-babel-tangle-file
+	  (expand-file-name org-file dotfiles-folder))))
+
+     (defun dotfiles-tangle-org-files ()
+       "tangles all of the .org files in the paths specified by the variable dotfiles folder"
+       (interactive)
+       (dolist (org-file dotfiles-org-files)
+	 (dotfiles-tangle-org-file org-file))
+       (message "dotfiles are up to date!"))
+   #+end_src
+
+* Episode 5: Reading and Writing Buffers in Practice
+
+  #+begin_src emacs-lisp
+    ;; getting the current buffer
+    (current-buffer)
+
+    ;; getting a buffer by name
+    (get-buffer "*scratch*")
+
+    ;; create a buffer
+    (get-buffer-create "Hello World!")
+
+    ;; change the current buffer
+    (progn
+      (set-buffer (get-buffer "*scratch*"))
+      (current-buffer))
+
+    ;; change the current buffer safely
+    (progn
+      (with-current-buffer "*scratch*"
+	(message "Current Buffer: %s" (current-buffer)))
+      (current-buffer))
+
+    ;; working with file buffers
+    (buffer-file-name)
+
+    ;; get buffer that represents a certain file
+    (get-file-buffer "~/Documents/elisp/learning_elisp.org")
+  #+end_src
+
+** Get buffers for org config files
+
+   #+begin_src emacs-lisp
+     (setq dotcrafter-org-files '("Emacs.org" "Desktop.org" "Systems.org"))
+
+     (dolist (org-file dotcrafter-org-files)
+       (with-current-buffer (get-file-buffer (expand-file-name org-file
+							       dotcrafter-dotfiles-folder))
+	 (message "File: %s" (buffer-file-name))))
+   #+end_src
