@@ -501,6 +501,12 @@ interactive can accept parameters that tell Emacs what to do when the command is
 
     ;; get buffer that represents a certain file
     (get-file-buffer "~/Documents/elisp/learning_elisp.org")
+
+    ;; points
+    (point)
+    (point-min)
+    (point-max)
+
   #+end_src
 
 ** Get buffers for org config files
@@ -512,4 +518,324 @@ interactive can accept parameters that tell Emacs what to do when the command is
        (with-current-buffer (get-file-buffer (expand-file-name org-file
 							       dotcrafter-dotfiles-folder))
 	 (message "File: %s" (buffer-file-name))))
+   #+end_src
+
+** Moving the Point
+
+- goto-char : move the point to a specific position
+- forward-char : move the point forward by a number of positions
+- backward-char : move the point backward by a number of positions
+- beginning-of-buffer : go to the beginning of the buffer
+- end-of-buffer : go to the end of the buffer
+- forward-word : move forward by one "word"
+- backward-word : move backward by one "word"
+
+#+begin_src emacs-lisp
+  (goto-char 1)
+  (goto-char (point-min))
+
+  (forward-char)
+  (forward-char 5)
+  (backward-char 10)
+  (forward-word)
+  (backward-word)
+#+end_src
+
+** Preserving the Point
+
+   #+begin_src emacs-lisp
+     (save-excursion
+       (goto-char (point-max))
+       (point))
+   #+end_src
+
+** Examining Buffer Text
+
+   #+begin_src emacs-lisp
+     (char-after)
+     (char-after (point))
+     (char-after (point-min))
+
+     ;; get a substring of text in the buffer between 2 points
+     (buffer-substring 1 21)
+     (buffer-substring-no-properties 1 21)
+   #+end_src
+
+** The Thing
+
+   #+begin_src emacs-lisp
+     (thing-at-point 'word)
+     (thing-at-point 'sentence)
+     (thing-at-point 'sentence t)
+     (thing-at-point 'sexp)
+   #+end_src
+
+** Searching for Text
+
+   #+begin_src emacs-lisp
+     (search-forward "ways")
+     (search-backward "Thing")
+     (search-backward "thing" nil t 1)
+     (search-backward "thing" nil t 4)
+   #+end_src
+
+** Example: Finding Org Code Block Output Paths
+
+   #+begin_src emacs-lisp
+     (defun dotcrafter--scan-for-output-files (org-file)
+       (let ((output-files '())
+	     (current-match t))
+	 (with-current-buffer (or (get-file-buffer org-file)
+				  (find-file-noselect org-file))
+	   (save-excursion
+	     (goto-char (point-min))
+	     (while current-match
+	       (setq current-match (search-forward ":tangle " nil t))
+	       (when current-match
+		 (let ((output-file (thing-at-point 'filename t)))
+		   (unless (org (not output-file)
+				(string-equal output-file "no"))
+		     (setq output-files (cons output-file
+					      output-files))))))))
+	 output-files))
+
+     (let ((output-files '()))
+       (dolist (org-file dotcrafter-org-files)
+	 (setq output-files
+	       (append output-files
+		       (dotcrafter--scan-for-output-files
+			(expand-file-name org-file
+					  dotcrafter-dotfiles-folder)))))
+       output-files)
+   #+end_src
+
+** Inserting Text
+
+   #+begin_src emacs-lisp
+     (insert " 0-o")
+     (insert "\n" "this is" "that")
+     (insert-char ?\- 20)
+   #+end_src
+
+** Deleting Text
+
+   #+begin_src emacs-lisp
+     (with-current-buffer ".gitignore"
+       (delete-region (point) (point-max)))
+   #+end_src
+
+** Saving a Buffer
+
+   #+begin_src emacs-lisp
+(save-buffer)
+   #+end_src
+
+* Episode 6: Managing Files and Directories in Practice
+
+** Getting the Current Directory
+
+   #+begin_src emacs-lisp
+default-directory
+   #+end_src
+
+** Manipulating File Paths
+
+In emacs, file paths are considered to have 2 parts:
+- the directory part
+- the non-directoyr part, i.e. the file name and its extension
+
+#+begin_src emacs-lisp
+  (file-name-directory (buffer-file-name))
+  (file-name-nondirectory (buffer-file-name))
+  (file-name-extension (buffer-file-name))
+  (file-name-sans-extension (buffer-file-name))
+#+end_src
+
+** Resolving File Paths
+
+   #+begin_src emacs-lisp
+     ;; check whether a path is absolute
+     (file-name-absolute-p (buffer-file-name))
+     ;; get the path relative to another path
+     (file-relative-name (buffer-file-name) "~/Documents")
+     ;; return an absolute path for a file under a specified directory
+     (expand-file-name "learning_elisp.org")
+     (expand-file-name "$HOME/.emacs.d")  ;; not quite
+     (substitute-in-file-name "$HOME/.emacs.d")  ;; nice
+   #+end_src
+
+** Example: Resolving the Destination Path of a Configuration File
+
+   #+begin_src emacs-lisp
+     (defun dotcrafter--resolve-config-files-path ()
+       (expand-file-name dotcrafter-config-files-directory
+			 dotcrafter-dotfiles-folder))
+   #+end_src
+
+** Checking if files and directories exist
+
+   #+begin_src emacs-lisp
+     (file-exists-p "~/.emacs.d/initialization.org")
+     (file-exists-p "~/.emacs.d")
+   #+end_src
+
+Other useful functions:
+- file-readable-p
+- file-executable-p
+- file-writable-p
+
+** Creating Directories
+
+   #+begin_src emacs-lisp
+     (make-directory "~/.emacs.d/exwm/example")
+   #+end_src
+
+** Listing Files in Directories
+
+   #+begin_src emacs-lisp
+     (directory-files "~/Documents")
+     (directory-files "~/Documents" t) ;; return full paths
+     (directory-files "~/Documents" t ".org")  ;; get all files containing .org
+     (directory-files-recursively "~/Documents" "\\.org$")
+   #+end_src
+
+** Copying, Moving, and Deleting Files and Directories
+
+   #+begin_src emacs-lisp
+     (copy-file "~/.emacs.d/init.el" "/tmp/")
+     (copy-directory "~/.emacs.d" "/tmp/")
+
+     (rename-file "/tmp/init.el" "/tmp/init-new.el")
+   #+end_src
+
+** Make Symbolic Links
+
+   #+begin_src emacs-lisp
+(make-symbolic-link "~/.emacs.d" "~/emacs.d/")
+   #+end_src
+
+* Episode 7: Creating Custom Minor Modes
+
+** Create a Simple Minor Mode from Scratch
+
+  #+begin_src emacs-lisp
+    (make-variable-buffer-local
+     (defvar dotcrafter-basic-mode nil
+       "Toggle dotcrafter-basic mode."))
+
+    (defvar dotcrafter-basic-mode-map (make-sparse-keymap)
+      "The keymap for dotcrafter basic mode")
+
+    ;; define a key in the keymap
+    (define-key dotcrafter-basic-mode-map (kbd "C-c C-. t")
+      (lambda ()
+	(interactive)
+	(message "dotcrafter keybinding used!")))
+
+    (add-to-list 'minor-mode-alist '(dotcrafter-basic-mode " dotcrafter"))
+    (add-to-list 'minor-mode-map-alist (cons 'dotcrafter-basic-mode dotcrafter-basic-mode-map))
+
+    (defun dotcrafter-basic-mode (&optional ARG)
+      (interactive (list 'toggle))
+      (setq dotcrafter-basic-mode
+	    (if (eq ARG 'toggle)
+		(not dotcrafter-basic-mode)
+	      (> ARG 0)))
+      ;; take some action whether enabled or disabled
+      (if dotcrafter-basic-mode
+	  (message "dotcrafter-basic-mode-activated!")
+	(message "dotcrafter-basic-mode deactivated")))
+  #+end_src
+
+** Creating a Hook
+
+A hook is a variable that stores a list of functions to be invoked when something happens, like when a mode is activated.
+
+#+begin_src emacs-lisp
+  (defvar dotcrafter-basic-mode-hook nil
+    "The hook for dotcrafter-basic-mode.")
+
+  ;; execute a hook
+  (run-hooks 'dotcrafter-basic-mode-hook)
+
+  ;; major modes should use the run-mode-hooks function instead!
+#+end_src
+
+** Using the define-minor-mode macro
+
+   #+begin_src emacs-lisp
+     (define-minor-mode dotcrafter-mode
+       "Toggles global dotcrafter-mode"
+       nil ;; initial value, nil for disabled
+       :global t
+       :group 'dotfiles
+       :lighter " dotcrafter"
+       :keymap
+       (list (cons (kbd "C-c C-. t")
+		   (lambda ()
+		     (interactive)
+		     (message "dotcrafter keybinding used!"))))
+       (if dotcrafter-mode
+	   (message "dotcrafter-basic-mode activated!")
+	 (message "dotcrafter-basic-mode deactivated!")))
+
+     (add-hook 'dotcrafter-mode-hook (lambda () (message "Hook was executed!")))
+     (add-hook 'dotcrafter-mode-on-hook (lambda () (message "dotcrafter turned on!")))
+     (add-hook 'dotcrafter-mode-off-hook (lambda () (message "dotcrafter turned off!")))
+   #+end_src
+
+** Example: Writing real behavior for dotcrafter-mode
+
+   #+begin_src emacs-lisp
+     (defcustom dotcrafter-keymap-prefix "C-c C-."
+       "The prefix for dotcrafter-mode key bindings"
+       :type 'string
+       :group 'dotfiles)
+
+     (defcustom dotcrafter-tangle-on-save t
+       "When t, automatically tangle Org files on save."
+       :type 'boolean
+       :group 'dotfiles)
+
+     (defun dotcrafter-tangle-org-file (&optional org-file)
+       "Tangles a single .org file relative to the path in the dotfiles folder.
+     If no file is specified, tangle the current file if it is an org-mode buffer
+     inside of dotfiles-folder"
+       (interactive)
+       ;; suppress prompts and messages
+       (let ((org-confirm-babel-evaluate nil)
+	     (message-log-max nil)
+	     (inhibit-message t))
+	 (org-babel-tangle-file (expand-file-name org-file dotcrafter-dotfiles-folder))
+	 ;; TODO: only update files that are generated by this file
+	 (dotcrafter-link-config-files)))
+
+     (defun dotcrafter--org-mode-hook ()
+       (add-hook 'after-save-hook #'dotcrafter--after-save-handler nil t))
+
+     (defun dotcrafter--after-save-handler ()
+       (when (and dotcrafter-mode
+		  dotcrafter-tangle-on-save
+		  (member (file-name-nondirectory buffer-file-name)
+			  dotcrafter-org-files)
+		  (string-equal (directory-file-name (file-name-directory (buffer-file-name)))
+				(directory-file-name (expand-file-name dotcrafter-dotfiles-folder))))
+	 (message "Tangling %s" (file-name-nondirectory buffer-file-name))
+	 (dotcrafter-tangle-org-file buffer-file-name)))
+
+     (defun dotcrafter--key (key)
+       (kbd (concat dotcrafter-keymap-prefix " " key)))
+
+     (define-minor-mode dotcrafter-mode
+       "Toggles global dotcrafter-mode"
+       nil ;; initial value, nil for disabled
+       :global t
+       :group 'dotfiles
+       :lighter " dotcrafter"
+       :keymap
+       (list (cons (dotcrafter--key "t") #'dotcrafter-tangle-org-file)
+	     (cons (dotcrafter--key "u") #'dotcrafter-update-dotfiles))
+       (if dotcrafter-mode
+	   (add-hook 'org-mode-hook #'dotcrafter--org-mode-hook)
+	 (remove-hook 'org-mode-hook #'dotcrafter--org-mode-hook)))
    #+end_src
